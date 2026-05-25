@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop   # Hibernate creates schema from entities in tests
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: true
+
+  flyway:
+    enabled: false   # Flyway disabled in tests; Hibernate owns schema creation
+
+app:
+  cors:
+    origins: http://localhost:3031
+  jwt:
+    secret: test-secret-at-least-32-characters-long
