@@ -19,9 +19,13 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -255,6 +259,141 @@ class OrderControllerTest {
             .andExpect(jsonPath("$.code").value("not_found"));
     }
 
+    // ── GET /v1/orders (my orders) ────────────────────────────────────────────
+
+    @Test
+    void getMyOrders_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(get("/v1/orders"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getMyOrders_noOrders_returnsEmptyList() throws Exception {
+        mockMvc.perform(get("/v1/orders")
+                .with(customerJwt()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void getMyOrders_returnsOnlyCallerOrders() throws Exception {
+        // Create an order for this user
+        mockMvc.perform(post("/v1/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validOrderJson())
+                .with(customerJwt()))
+            .andExpect(status().isCreated());
+
+        // Create a guest order (no userId)
+        mockMvc.perform(post("/v1/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validOrderJson()))
+            .andExpect(status().isCreated());
+
+        // My orders should return only the authenticated user's order
+        mockMvc.perform(get("/v1/orders")
+                .with(customerJwt()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].totalVnd").value(5_000_000));
+    }
+
+    @Test
+    void getMyOrders_returnsSortedNewestFirst() throws Exception {
+        // Place two orders
+        mockMvc.perform(post("/v1/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validOrderJson())
+                .with(customerJwt()))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/v1/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validOrderJson())
+                .with(customerJwt()))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/v1/orders")
+                .with(customerJwt()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    // ── PATCH /v1/orders/:id/status ───────────────────────────────────────────
+
+    @Test
+    void updateStatus_staffRole_updatesAndReturns() throws Exception {
+        String body = mockMvc.perform(post("/v1/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validOrderJson()))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        String orderId = new com.fasterxml.jackson.databind.ObjectMapper()
+            .readTree(body).get("id").asText();
+
+        mockMvc.perform(patch("/v1/orders/" + orderId + "/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "status": "CONFIRMED" }
+                    """)
+                .with(staffJwt()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("CONFIRMED"));
+    }
+
+    @Test
+    void updateStatus_customerRole_returns403() throws Exception {
+        String body = mockMvc.perform(post("/v1/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validOrderJson()))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        String orderId = new com.fasterxml.jackson.databind.ObjectMapper()
+            .readTree(body).get("id").asText();
+
+        mockMvc.perform(patch("/v1/orders/" + orderId + "/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "status": "CONFIRMED" }
+                    """)
+                .with(customerJwt()))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void updateStatus_notFound_returns404() throws Exception {
+        mockMvc.perform(patch("/v1/orders/00000000-0000-0000-0000-000000000000/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "status": "CONFIRMED" }
+                    """)
+                .with(staffJwt()))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateStatus_invalidStatus_returns422() throws Exception {
+        String body = mockMvc.perform(post("/v1/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validOrderJson()))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        String orderId = new com.fasterxml.jackson.databind.ObjectMapper()
+            .readTree(body).get("id").asText();
+
+        mockMvc.perform(patch("/v1/orders/" + orderId + "/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "status": "INVALID_STATUS" }
+                    """)
+                .with(staffJwt()))
+            .andExpect(status().isBadRequest());
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private String validOrderJson() {
@@ -270,5 +409,21 @@ class OrderControllerTest {
                 "paymentMethod": "COD"
             }
             """;
+    }
+
+    private org.springframework.test.web.servlet.request.RequestPostProcessor customerJwt() {
+        return jwt().jwt(j -> j
+            .subject(userId.toString())
+            .claim("role", "CUSTOMER")
+            .claim("email", "customer@test.com")
+        ).authorities(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+    }
+
+    private org.springframework.test.web.servlet.request.RequestPostProcessor staffJwt() {
+        return jwt().jwt(j -> j
+            .subject(UUID.randomUUID().toString())
+            .claim("role", "STAFF")
+            .claim("email", "staff@test.com")
+        ).authorities(new SimpleGrantedAuthority("ROLE_STAFF"));
     }
 }

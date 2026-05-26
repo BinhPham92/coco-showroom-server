@@ -3,6 +3,8 @@ package com.cocoshowroom.server.shared;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -30,6 +32,24 @@ public class GlobalExceptionHandler {
     public ApiErrorResponse handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
         String message = "Invalid value for parameter '" + ex.getName() + "': " + ex.getValue();
         return new ApiErrorResponse("bad_request", message, traceId(req));
+    }
+
+    /**
+     * Re-throw so Spring Security's {@code ExceptionTranslationFilter} converts it
+     * to a proper 403 response. Without this the catch-all below would return 500.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public void handleAccessDenied(AccessDeniedException ex) throws AccessDeniedException {
+        throw ex;
+    }
+
+    /**
+     * Jackson can't deserialize an unknown enum value — surface as 400 rather than 500.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleMessageNotReadable(HttpMessageNotReadableException ex, HttpServletRequest req) {
+        return new ApiErrorResponse("bad_request", "Malformed or unreadable request body", traceId(req));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

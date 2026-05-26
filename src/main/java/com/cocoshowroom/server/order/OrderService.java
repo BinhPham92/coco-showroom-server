@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -64,5 +65,26 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
         return OrderResponse.from(order);
+    }
+
+    /** Returns all orders belonging to the authenticated user, newest first. */
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getMyOrders(UUID userId) {
+        return orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(OrderResponse::from)
+                .toList();
+    }
+
+    /**
+     * Updates order status. Restricted to STAFF — enforced via
+     * {@code @PreAuthorize} on the controller method.
+     */
+    @Transactional
+    public OrderResponse updateStatus(UUID orderId, OrderStatus newStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        order.setStatus(newStatus);
+        return OrderResponse.from(orderRepository.saveAndFlush(order));
     }
 }
