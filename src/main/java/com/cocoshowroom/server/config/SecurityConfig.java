@@ -55,6 +55,10 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/v1/products/**").permitAll()
             // Contact — public
             .requestMatchers(HttpMethod.POST, "/v1/contact").permitAll()
+            // Orders — public (guest checkout supported); JWT is optional and
+            // attached when present to associate the order with the user account
+            .requestMatchers(HttpMethod.POST, "/v1/orders").permitAll()
+            .requestMatchers(HttpMethod.GET,  "/v1/orders/**").permitAll()
             // Everything else requires a valid JWT
             .anyRequest().authenticated()
         )
