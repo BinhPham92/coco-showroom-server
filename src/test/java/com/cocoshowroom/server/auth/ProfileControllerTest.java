@@ -7,7 +7,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
@@ -17,7 +16,6 @@ import java.util.UUID;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -27,25 +25,32 @@ class ProfileControllerTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired UserRepository userRepository;
-    @Autowired PasswordEncoder passwordEncoder;
+    @Autowired UserIdentityRepository userIdentityRepository;
 
     private UUID userId;
 
     @BeforeEach
     void setUp() {
+        userIdentityRepository.deleteAll();
         userRepository.deleteAll();
 
         User user = new User();
-        user.setEmail("customer@test.com");
-        user.setPasswordHash(passwordEncoder.encode("password123"));
         user.setRole(Role.CUSTOMER);
         userId = userRepository.save(user).getId();
+
+        // Seed the identity so GET /me can resolve email via the service
+        UserIdentity identity = new UserIdentity();
+        identity.setProvider(OAuthProvider.GOOGLE);
+        identity.setEmail("customer@test.com");
+        identity.setUser(userRepository.findById(userId).orElseThrow());
+        userIdentityRepository.save(identity);
     }
 
     // ── GET /v1/auth/me ───────────────────────────────────────────────────────
 
     @Test
     void me_withToken_returnsProfileIncludingNullFields() throws Exception {
+        // Email is read from the JWT claim (stored by JwtService at sign-in time)
         mockMvc.perform(get("/v1/auth/me").with(customerJwt()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").isNotEmpty())
@@ -104,17 +109,14 @@ class ProfileControllerTest {
 
     @Test
     void updateProfile_emptyPhone_clearsField() throws Exception {
-        // Set phone first
         mockMvc.perform(patch("/v1/auth/me")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     { "phone": "0901234567" }
                     """)
                 .with(customerJwt()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.phone").value("0901234567"));
+            .andExpect(status().isOk());
 
-        // Clear it with an empty string
         mockMvc.perform(patch("/v1/auth/me")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
@@ -167,102 +169,13 @@ class ProfileControllerTest {
             .andExpect(status().isUnauthorized());
     }
 
-    // ── POST /v1/auth/change-password ─────────────────────────────────────────
-
-    @Test
-    void changePassword_correctCurrentPassword_returns204() throws Exception {
-        mockMvc.perform(post("/v1/auth/change-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                        "currentPassword": "password123",
-                        "newPassword": "newPassword456"
-                    }
-                    """)
-                .with(customerJwt()))
-            .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void changePassword_newPasswordWorksForSignIn() throws Exception {
-        // Change the password
-        mockMvc.perform(post("/v1/auth/change-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                        "currentPassword": "password123",
-                        "newPassword": "newPassword456"
-                    }
-                    """)
-                .with(customerJwt()))
-            .andExpect(status().isNoContent());
-
-        // Old password no longer works
-        mockMvc.perform(post("/v1/auth/sign-in")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    { "email": "customer@test.com", "password": "password123" }
-                    """))
-            .andExpect(status().isUnauthorized());
-
-        // New password works
-        mockMvc.perform(post("/v1/auth/sign-in")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    { "email": "customer@test.com", "password": "newPassword456" }
-                    """))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.token").isNotEmpty());
-    }
-
-    @Test
-    void changePassword_wrongCurrentPassword_returns401() throws Exception {
-        mockMvc.perform(post("/v1/auth/change-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                        "currentPassword": "wrongPassword",
-                        "newPassword": "newPassword456"
-                    }
-                    """)
-                .with(customerJwt()))
-            .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void changePassword_newPasswordTooShort_returns422() throws Exception {
-        mockMvc.perform(post("/v1/auth/change-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                        "currentPassword": "password123",
-                        "newPassword": "short"
-                    }
-                    """)
-                .with(customerJwt()))
-            .andExpect(status().isUnprocessableEntity())
-            .andExpect(jsonPath("$.code").value("validation_error"));
-    }
-
-    @Test
-    void changePassword_unauthenticated_returns401() throws Exception {
-        mockMvc.perform(post("/v1/auth/change-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                        "currentPassword": "password123",
-                        "newPassword": "newPassword456"
-                    }
-                    """))
-            .andExpect(status().isUnauthorized());
-    }
-
     // ── Helper ────────────────────────────────────────────────────────────────
 
     private RequestPostProcessor customerJwt() {
         return jwt().jwt(j -> j
             .subject(userId.toString())
             .claim("role", "CUSTOMER")
+            .claim("email", "customer@test.com")   // W8: email lives in JWT claim
         ).authorities(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
     }
 }

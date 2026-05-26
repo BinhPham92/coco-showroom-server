@@ -7,14 +7,18 @@ Follows the migration plan in the frontend's `docs/PRD/13-backend-integration.md
 
 ## Migration status
 
-| Week | Feature         | Status      |
-|------|-----------------|-------------|
-| W1   | Contact form    | ✅ Done     |
-| W2   | Products read   | ⏳ Next     |
-| W3   | Auth (JWT)      | 🔜 Planned  |
-| W4   | Cart reconcile  | 🔜 Planned  |
-| W5   | Orders (create) | 🔜 Planned  |
-| W6   | Orders (read)   | 🔜 Planned  |
+| Week | Feature                       | Status      |
+|------|-------------------------------|-------------|
+| W1   | Contact form                  | ✅ Done     |
+| W2   | Products read                 | ✅ Done     |
+| W3   | Auth (JWT)                    | ✅ Done     |
+| W4   | Cart reconcile                | ✅ Done     |
+| W5   | Orders (create)               | ✅ Done     |
+| W6   | Orders (read)                 | ✅ Done     |
+| W7   | Reviews (collect + display)   | ✅ Done     |
+| W8   | OAuth/SSO (Google + Facebook) | ✅ Done     |
+| W9   | Production hardening          | 🔜 Planned  |
+| W10  | Transactional emails          | 🔜 Planned  |
 
 ## Quick start (local dev)
 
@@ -50,6 +54,9 @@ Tests use H2 in-memory with `MODE=PostgreSQL`. Flyway is disabled; Hibernate cre
 | `SPRING_DATASOURCE_PASSWORD` | `cocoshowroom`              | ✅               |
 | `APP_CORS_ORIGINS`       | `http://localhost:3031`          | ✅               |
 | `JWT_SECRET`             | dev placeholder                  | ✅ (≥ 32 chars)  |
+| `ADMIN_EMAIL`            | `admin@cocoshowroom.vn`          | ✅               |
+| `ADMIN_PROVIDER`         | `google`                         | ✅               |
+| `GOOGLE_CLIENT_ID`       | —                                | ✅               |
 
 ## Deploying to VPS
 
@@ -81,16 +88,31 @@ src/main/java/com/cocoshowroom/server/
 ├── CocoshowroomApplication.java
 ├── config/
 │   ├── AppProperties.java    # Typed @ConfigurationProperties
-│   └── SecurityConfig.java   # CORS + stateless security
+│   └── SecurityConfig.java   # CORS + stateless JWT resource server
+├── auth/                     # W3/W8: JWT auth + OAuth/SSO
+│   ├── AuthController.java   # POST /social, POST /sign-out, GET+PATCH /me
+│   ├── AuthService.java
+│   ├── JwtService.java
+│   ├── AdminUserInitializer.java
+│   ├── User.java / UserRepository.java
+│   ├── UserIdentity.java / UserIdentityRepository.java   # W8
+│   ├── OAuthProvider.java    # enum: GOOGLE, FACEBOOK
+│   └── social/
+│       ├── SocialTokenVerifier.java  # interface
+│       ├── SocialVerifierFactory.java
+│       ├── GoogleVerifier.java       # JWKS-based id_token verification
+│       └── FacebookVerifier.java     # Graph API access_token verification
+├── cart/                     # W4: cart reconciliation
 ├── contact/                  # W1: contact form submissions
-│   ├── ContactController.java
-│   ├── ContactService.java
-│   ├── ContactRepository.java
-│   ├── ContactSubmission.java (entity)
-│   └── ContactRequest.java   (record DTO)
+├── newsletter/               # newsletter subscribe/unsubscribe
+├── order/                    # W5/W6: order creation + history
+├── product/                  # W2: product catalogue (+ staff CRUD)
+├── review/                   # W7: review submission + moderation
 └── shared/
-    ├── ApiErrorResponse.java        # { code, message, traceId }
-    └── GlobalExceptionHandler.java  # Maps exceptions → HTTP responses
+    ├── ApiErrorResponse.java
+    ├── GlobalExceptionHandler.java
+    ├── InvalidTokenException.java    # W8: maps to 401
+    └── ...
 ```
 
 ## API contract

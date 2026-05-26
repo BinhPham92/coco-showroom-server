@@ -54,7 +54,11 @@ app:
     base-url: ${STORAGE_BASE_URL:http://localhost:3031}
 
   admin:
-    # Credentials for the auto-seeded STAFF account (created on first boot).
-    # Change both values before first production boot.
+    # Identity for the auto-seeded STAFF account (created on first boot).
+    # The first time this OAuth account signs in it receives a STAFF JWT.
     email: ${ADMIN_EMAIL:admin@cocoshowroom.vn}
-    password: ${ADMIN_PASSWORD:changeme}
+    provider: ${ADMIN_PROVIDER:google}
+
+  oauth:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}

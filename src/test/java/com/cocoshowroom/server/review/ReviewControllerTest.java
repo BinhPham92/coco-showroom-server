@@ -14,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
@@ -38,8 +37,6 @@ class ReviewControllerTest {
     @Autowired ReviewRepository reviewRepository;
     @Autowired ProductRepository productRepository;
     @Autowired UserRepository userRepository;
-    @Autowired PasswordEncoder passwordEncoder;
-
     private UUID userId;
     private Product product;
 
@@ -50,8 +47,6 @@ class ReviewControllerTest {
         userRepository.deleteAll();
 
         User user = new User();
-        user.setEmail("customer@test.com");
-        user.setPasswordHash(passwordEncoder.encode("pass"));
         user.setRole(Role.CUSTOMER);
         userId = userRepository.save(user).getId();
 

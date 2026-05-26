@@ -44,12 +44,27 @@ public class AppProperties {
         private String baseUrl = "http://localhost:3031";
     }
 
+    private OAuth oauth = new OAuth();
+
     @Getter
     @Setter
     public static class Admin {
-        /** E-mail for the seeded STAFF account (created on first boot if missing). */
+        /** Email for the auto-seeded STAFF identity. */
         private String email;
-        /** Plain-text password — BCrypt-hashed by AdminUserInitializer at runtime. */
-        private String password;
+        /** OAuth provider the admin will use to sign in (e.g. "google", "facebook"). */
+        private String provider = "google";
+    }
+
+    @Getter
+    @Setter
+    public static class OAuth {
+        private Google google = new Google();
+
+        @Getter
+        @Setter
+        public static class Google {
+            /** Google OAuth client ID — used to verify the 'aud' claim of id_tokens. */
+            private String clientId;
+        }
     }
 }

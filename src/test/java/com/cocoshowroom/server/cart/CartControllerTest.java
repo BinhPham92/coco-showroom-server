@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -33,8 +32,6 @@ class CartControllerTest {
     @Autowired CartItemRepository cartItemRepository;
     @Autowired UserRepository userRepository;
     @Autowired ProductRepository productRepository;
-    @Autowired PasswordEncoder passwordEncoder;
-
     private UUID userId;
     private Product product;
 
@@ -45,8 +42,6 @@ class CartControllerTest {
         userRepository.deleteAll();
 
         User user = new User();
-        user.setEmail("customer@test.com");
-        user.setPasswordHash(passwordEncoder.encode("password123"));
         user.setRole(Role.CUSTOMER);
         userId = userRepository.save(user).getId();
 

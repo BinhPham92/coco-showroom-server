@@ -18,7 +18,14 @@ public class JwtService {
     private final JwtEncoder jwtEncoder;
     private final AppProperties appProperties;
 
-    public String generateToken(User user) {
+    /**
+     * Issues a signed HS256 JWT for the given user.
+     *
+     * @param user  The authenticated user.
+     * @param email The email address from the user's {@link UserIdentity} (W8: email
+     *              is no longer a field on {@link User} itself).
+     */
+    public String generateToken(User user, String email) {
         Instant now = Instant.now();
         long expiresInSeconds = (long) appProperties.getJwt().getExpirationHours() * 3600;
 
@@ -27,7 +34,7 @@ public class JwtService {
             .subject(user.getId().toString())
             .issuedAt(now)
             .expiresAt(now.plusSeconds(expiresInSeconds))
-            .claim("email", user.getEmail())
+            .claim("email", email)
             .claim("role", user.getRole().name())
             .build();
 

@@ -21,11 +21,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, length = 320, unique = true)
-    private String email;
-
-    @Column(nullable = false)
-    private String passwordHash;
+    // email and passwordHash have moved to UserIdentity (W8).
+    // Lookup is now by (provider, email) in the user_identities table.
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

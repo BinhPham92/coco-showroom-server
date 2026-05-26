@@ -70,11 +70,11 @@ public class GlobalExceptionHandler {
         return new ApiErrorResponse("conflict", ex.getMessage(), traceId(req));
     }
 
-    @ExceptionHandler(InvalidCredentialsException.class)
+    @ExceptionHandler(InvalidTokenException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleInvalidCredentials(InvalidCredentialsException ex, HttpServletRequest req) {
-        // Return a generic message — never leak which field is wrong
-        return new ApiErrorResponse("unauthorized", "Invalid email or password", traceId(req));
+    public ApiErrorResponse handleInvalidToken(InvalidTokenException ex, HttpServletRequest req) {
+        // Return a generic message — never leak provider-specific rejection details to clients
+        return new ApiErrorResponse("unauthorized", "Social token verification failed", traceId(req));
     }
 
     @ExceptionHandler(Exception.class)

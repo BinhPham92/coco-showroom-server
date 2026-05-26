@@ -23,4 +23,7 @@ app:
     base-url: http://localhost:3031
   admin:
     email: admin@test.com
-    password: testpassword123
+    provider: google
+  oauth:
+    google:
+      client-id: test-google-client-id

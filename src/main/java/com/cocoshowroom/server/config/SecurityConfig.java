@@ -18,8 +18,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -48,8 +46,8 @@ public class SecurityConfig {
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/actuator/health").permitAll()
-            // Auth endpoints — sign-in and sign-out are public; /me requires a token
-            .requestMatchers(HttpMethod.POST, "/v1/auth/sign-in").permitAll()
+            // Auth endpoints — social sign-in and sign-out are public; /me requires a token
+            .requestMatchers(HttpMethod.POST, "/v1/auth/social").permitAll()
             .requestMatchers(HttpMethod.POST, "/v1/auth/sign-out").permitAll()
             // Products — reads are public; writes require STAFF role via @PreAuthorize
             .requestMatchers(HttpMethod.GET, "/v1/products/**").permitAll()
@@ -110,11 +108,6 @@ public class SecurityConfig {
       return List.of(new SimpleGrantedAuthority("ROLE_" + role));
     });
     return converter;
-  }
-
-  @Bean
-  public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
   }
 
   @Bean
