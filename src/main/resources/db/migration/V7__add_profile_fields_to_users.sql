@@ -1,0 +1,3 @@
+ALTER TABLE users
+    ADD COLUMN name  VARCHAR(200),
+    ADD COLUMN phone VARCHAR(20);

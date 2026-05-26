@@ -55,6 +55,12 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/v1/products/**").permitAll()
             // Contact — public
             .requestMatchers(HttpMethod.POST, "/v1/contact").permitAll()
+            // Newsletter — subscribe and unsubscribe are both public
+            .requestMatchers(HttpMethod.POST,   "/v1/newsletter").permitAll()
+            .requestMatchers(HttpMethod.DELETE, "/v1/newsletter").permitAll()
+            // Reviews — GET is covered by the products wildcard above;
+            // POST is public so guest reviews are accepted
+            .requestMatchers(HttpMethod.POST, "/v1/products/*/reviews").permitAll()
             // Orders — public (guest checkout supported); JWT is optional and
             // attached when present to associate the order with the user account
             .requestMatchers(HttpMethod.POST, "/v1/orders").permitAll()
