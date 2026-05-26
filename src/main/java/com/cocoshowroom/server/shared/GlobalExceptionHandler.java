@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -17,25 +18,54 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-    public ApiErrorResponse handleValidation(
-        MethodArgumentNotValidException ex,
-        HttpServletRequest request
-    ) {
+    public ApiErrorResponse handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
         String message = ex.getBindingResult().getFieldErrors().stream()
             .map(e -> e.getField() + ": " + e.getDefaultMessage())
             .collect(Collectors.joining(", "));
-        return new ApiErrorResponse("validation_error", message, traceId(request));
+        return new ApiErrorResponse("validation_error", message, traceId(req));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
+        String message = "Invalid value for parameter '" + ex.getName() + "': " + ex.getValue();
+        return new ApiErrorResponse("bad_request", message, traceId(req));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest req) {
+        return new ApiErrorResponse("bad_request", ex.getMessage(), traceId(req));
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiErrorResponse handleNotFound(NotFoundException ex, HttpServletRequest req) {
+        return new ApiErrorResponse("not_found", ex.getMessage(), traceId(req));
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiErrorResponse handleConflict(ConflictException ex, HttpServletRequest req) {
+        return new ApiErrorResponse("conflict", ex.getMessage(), traceId(req));
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiErrorResponse handleInvalidCredentials(InvalidCredentialsException ex, HttpServletRequest req) {
+        // Return a generic message — never leak which field is wrong
+        return new ApiErrorResponse("unauthorized", "Invalid email or password", traceId(req));
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiErrorResponse handleGeneric(Exception ex, HttpServletRequest request) {
-        log.error("[error] traceId={} {}", traceId(request), ex.getMessage(), ex);
-        return new ApiErrorResponse("internal_error", "An unexpected error occurred.", traceId(request));
+    public ApiErrorResponse handleGeneric(Exception ex, HttpServletRequest req) {
+        log.error("[error] traceId={} {}", traceId(req), ex.getMessage(), ex);
+        return new ApiErrorResponse("internal_error", "An unexpected error occurred.", traceId(req));
     }
 
-    private String traceId(HttpServletRequest request) {
-        String id = request.getHeader("X-Request-Id");
+    private String traceId(HttpServletRequest req) {
+        String id = req.getHeader("X-Request-Id");
         return (id != null && !id.isBlank()) ? id : UUID.randomUUID().toString();
     }
 }

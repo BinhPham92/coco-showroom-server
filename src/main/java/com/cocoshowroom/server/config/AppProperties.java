@@ -15,6 +15,8 @@ public class AppProperties {
 
     private Cors cors = new Cors();
     private Jwt jwt = new Jwt();
+    private Storage storage = new Storage();
+    private Admin admin = new Admin();
 
     @Getter
     @Setter
@@ -29,5 +31,25 @@ public class AppProperties {
         /** HS256 secret — must be ≥ 32 chars in production. */
         private String secret;
         private int expirationHours = 24;
+    }
+
+    @Getter
+    @Setter
+    public static class Storage {
+        /**
+         * Base URL prepended to image storage keys — no trailing slash.
+         * Local dev: http://localhost:3031 (Next.js public folder)
+         * Production: https://cdn.cocoshowroom.vn (S3/R2 CDN)
+         */
+        private String baseUrl = "http://localhost:3031";
+    }
+
+    @Getter
+    @Setter
+    public static class Admin {
+        /** E-mail for the seeded STAFF account (created on first boot if missing). */
+        private String email;
+        /** Plain-text password — BCrypt-hashed by AdminUserInitializer at runtime. */
+        private String password;
     }
 }

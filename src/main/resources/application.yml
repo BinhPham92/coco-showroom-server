@@ -43,6 +43,18 @@ management:
 app:
   cors:
     origins: ${APP_CORS_ORIGINS:http://localhost:3031}
+
   jwt:
     secret: ${JWT_SECRET:dev-secret-change-in-production-must-be-at-least-32-characters}
     expiration-hours: ${JWT_EXPIRATION_HOURS:24}
+
+  storage:
+    # Base URL prepended to image storage keys — no trailing slash.
+    # Local dev: Next.js public folder. Production: CDN origin (S3/R2).
+    base-url: ${STORAGE_BASE_URL:http://localhost:3031}
+
+  admin:
+    # Credentials for the auto-seeded STAFF account (created on first boot).
+    # Change both values before first production boot.
+    email: ${ADMIN_EMAIL:admin@cocoshowroom.vn}
+    password: ${ADMIN_PASSWORD:changeme}
