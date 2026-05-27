@@ -18,7 +18,7 @@ Follows the migration plan in the frontend's `docs/PRD/13-backend-integration.md
 | W7   | Reviews (collect + display)   | ✅ Done     |
 | W8   | OAuth/SSO (Google + Facebook) | ✅ Done     |
 | W9   | Production hardening          | ✅ Done     |
-| W10  | Transactional emails          | 🔜 Planned  |
+| W10  | Transactional emails          | ✅ Done     |
 
 ## Quick start (local dev)
 
@@ -57,6 +57,12 @@ Tests use H2 in-memory with `MODE=PostgreSQL`. Flyway is disabled; Hibernate cre
 | `ADMIN_EMAIL`            | `admin@cocoshowroom.vn`          | ✅               |
 | `ADMIN_PROVIDER`         | `google`                         | ✅               |
 | `GOOGLE_CLIENT_ID`       | —                                | ✅               |
+| `MAIL_HOST`              | `smtp.sendgrid.net`              | ✅               |
+| `MAIL_PORT`              | `587`                            | ✅               |
+| `MAIL_USERNAME`          | `apikey`                         | ✅               |
+| `MAIL_PASSWORD`          | —                                | ✅               |
+| `MAIL_FROM_ADDRESS`      | `no-reply@cocoshowroom.vn`       | ✅               |
+| `MAIL_FROM_NAME`         | `Coco Showroom`                  | ✅               |
 
 ## Deploying to VPS
 
@@ -115,6 +121,9 @@ src/main/java/com/cocoshowroom/server/
     ├── RequestIdFilter.java          # W9: UUID per-request in MDC + X-Request-Id header
     ├── RateLimitingFilter.java       # W9: Bucket4j rate limits (auth: 20/10min, reviews: 5/hr)
     └── ...
+└── email/                            # W10: transactional emails
+    ├── OrderConfirmedEvent.java      # Spring event published after order commit
+    └── OrderEmailService.java        # @TransactionalEventListener + @Async sender
 ```
 
 ## API contract

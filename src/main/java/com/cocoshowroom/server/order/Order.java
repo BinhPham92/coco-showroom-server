@@ -49,6 +49,17 @@ public class Order {
     @Column(columnDefinition = "TEXT")
     private String shippingNote;
 
+    /** Contact email for the order confirmation — provided at checkout. */
+    @Column(nullable = false, length = 320)
+    private String contactEmail;
+
+    /**
+     * Locale for the order-confirmation email.
+     * Accepted values: {@code vi} (default) or {@code en}.
+     */
+    @Column(nullable = false, length = 5)
+    private String locale = "vi";
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private PaymentMethod paymentMethod;

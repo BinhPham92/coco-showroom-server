@@ -24,6 +24,12 @@ public record CreateOrderRequest(
         @NotBlank @Size(min = 2) String shippingCity,
         String shippingNote,
 
+        // Email address for the order confirmation — required at checkout.
+        @NotBlank @Email String contactEmail,
+
+        // Locale for the order-confirmation email — "vi" (default) or "en".
+        @Pattern(regexp = "^(vi|en)$", message = "must be 'vi' or 'en'") String locale,
+
         @NotNull PaymentMethod paymentMethod
 
 ) {

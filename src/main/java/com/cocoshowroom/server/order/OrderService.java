@@ -1,9 +1,11 @@
 package com.cocoshowroom.server.order;
 
+import com.cocoshowroom.server.email.OrderConfirmedEvent;
 import com.cocoshowroom.server.product.Product;
 import com.cocoshowroom.server.product.ProductRepository;
 import com.cocoshowroom.server.shared.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,8 +16,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private final OrderRepository orderRepository;
-    private final ProductRepository productRepository;
+    private final OrderRepository            orderRepository;
+    private final ProductRepository          productRepository;
+    private final ApplicationEventPublisher  eventPublisher;
 
     /**
      * Creates a new order from the checkout form submission.
@@ -35,6 +38,8 @@ public class OrderService {
         order.setShippingDistrict(req.shippingDistrict());
         order.setShippingCity(req.shippingCity());
         order.setShippingNote(req.shippingNote());
+        order.setContactEmail(req.contactEmail());
+        order.setLocale(req.locale() != null ? req.locale() : "vi");
         order.setPaymentMethod(req.paymentMethod());
 
         long total = 0;
@@ -57,7 +62,11 @@ public class OrderService {
 
         order.setTotalVnd(total);
         // saveAndFlush so @CreationTimestamp is populated before we build the response
-        return OrderResponse.from(orderRepository.saveAndFlush(order));
+        OrderResponse saved = OrderResponse.from(orderRepository.saveAndFlush(order));
+        // Publish after flush — the @TransactionalEventListener fires once the outer
+        // transaction commits, ensuring the email goes out only for persisted orders.
+        eventPublisher.publishEvent(new OrderConfirmedEvent(saved));
+        return saved;
     }
 
     @Transactional(readOnly = true)

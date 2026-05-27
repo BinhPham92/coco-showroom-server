@@ -26,6 +26,18 @@ spring:
     virtual:
       enabled: true
 
+  mail:
+    host: ${MAIL_HOST:smtp.sendgrid.net}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:apikey}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 server:
   port: 8080
   shutdown: graceful
@@ -62,3 +74,7 @@ app:
   oauth:
     google:
       client-id: ${GOOGLE_CLIENT_ID:}
+
+  mail:
+    from-address: ${MAIL_FROM_ADDRESS:no-reply@cocoshowroom.vn}
+    from-name: ${MAIL_FROM_NAME:Coco Showroom}

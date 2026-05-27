@@ -131,6 +131,84 @@ class OrderControllerTest {
     }
 
     @Test
+    void createOrder_returnsContactEmailInResponse() throws Exception {
+        mockMvc.perform(post("/v1/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validOrderJson()))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.contactEmail").value("customer@example.com"));
+    }
+
+    @Test
+    void createOrder_noLocale_defaultsToVi() throws Exception {
+        mockMvc.perform(post("/v1/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validOrderJson()))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.locale").value("vi"));
+    }
+
+    @Test
+    void createOrder_englishLocale_persisted() throws Exception {
+        mockMvc.perform(post("/v1/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validOrderJson().replace("\"paymentMethod\": \"COD\"",
+                        "\"locale\": \"en\", \"paymentMethod\": \"COD\"")))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.locale").value("en"));
+    }
+
+    @Test
+    void createOrder_invalidLocale_returns422() throws Exception {
+        mockMvc.perform(post("/v1/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validOrderJson().replace("\"paymentMethod\": \"COD\"",
+                        "\"locale\": \"fr\", \"paymentMethod\": \"COD\"")))
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(jsonPath("$.code").value("validation_error"));
+    }
+
+    @Test
+    void createOrder_blankContactEmail_returns422() throws Exception {
+        mockMvc.perform(post("/v1/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                        "items": [{ "sku": "dongtrung-tuoi-premium", "qty": 1 }],
+                        "shippingName": "Test",
+                        "shippingPhone": "0901234567",
+                        "shippingAddress": "123 ABC",
+                        "shippingDistrict": "Quận 1",
+                        "shippingCity": "TP.HCM",
+                        "contactEmail": "",
+                        "paymentMethod": "COD"
+                    }
+                    """))
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(jsonPath("$.code").value("validation_error"));
+    }
+
+    @Test
+    void createOrder_invalidContactEmail_returns422() throws Exception {
+        mockMvc.perform(post("/v1/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                        "items": [{ "sku": "dongtrung-tuoi-premium", "qty": 1 }],
+                        "shippingName": "Test",
+                        "shippingPhone": "0901234567",
+                        "shippingAddress": "123 ABC",
+                        "shippingDistrict": "Quận 1",
+                        "shippingCity": "TP.HCM",
+                        "contactEmail": "not-an-email",
+                        "paymentMethod": "COD"
+                    }
+                    """))
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(jsonPath("$.code").value("validation_error"));
+    }
+
+    @Test
     void createOrder_unknownSku_returns404() throws Exception {
         mockMvc.perform(post("/v1/orders")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -142,6 +220,7 @@ class OrderControllerTest {
                         "shippingAddress": "123 ABC",
                         "shippingDistrict": "Quận 1",
                         "shippingCity": "TP.HCM",
+                        "contactEmail": "test@example.com",
                         "paymentMethod": "COD"
                     }
                     """))
@@ -161,6 +240,7 @@ class OrderControllerTest {
                         "shippingAddress": "123 ABC",
                         "shippingDistrict": "Quận 1",
                         "shippingCity": "TP.HCM",
+                        "contactEmail": "test@example.com",
                         "paymentMethod": "COD"
                     }
                     """))
@@ -180,6 +260,7 @@ class OrderControllerTest {
                         "shippingAddress": "123 ABC",
                         "shippingDistrict": "Quận 1",
                         "shippingCity": "TP.HCM",
+                        "contactEmail": "test@example.com",
                         "paymentMethod": "COD"
                     }
                     """))
@@ -218,6 +299,7 @@ class OrderControllerTest {
                         "shippingAddress": "123 Đường ABC",
                         "shippingDistrict": "Quận 1",
                         "shippingCity": "TP.HCM",
+                        "contactEmail": "customer@example.com",
                         "paymentMethod": "BANK"
                     }
                     """))
@@ -401,6 +483,7 @@ class OrderControllerTest {
                 "shippingDistrict": "Quận 1",
                 "shippingCity": "TP.HCM",
                 "shippingNote": "Giao giờ hành chính",
+                "contactEmail": "customer@example.com",
                 "paymentMethod": "COD"
             }
             """;

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Xác nhận đơn hàng</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#333333;">
+
+  <table role="presentation" style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td style="padding:24px 16px;text-align:center;">
+
+        <table role="presentation"
+               style="background:#ffffff;border-radius:8px;overflow:hidden;
+                      max-width:600px;width:100%;border-collapse:collapse;
+                      margin:0 auto;">
+
+          <!-- ── Header ──────────────────────────────────────────────── -->
+          <tr>
+            <td style="background:#1a1a1a;padding:24px 32px;">
+              <p style="margin:0;font-size:20px;font-weight:700;color:#ffffff;letter-spacing:1px;">
+                COCO SHOWROOM
+              </p>
+            </td>
+          </tr>
+
+          <!-- ── Body ───────────────────────────────────────────────── -->
+          <tr>
+            <td style="padding:32px;">
+
+              <h2 style="margin:0 0 8px;font-size:20px;color:#1a1a1a;">
+                Cảm ơn bạn đã đặt hàng!
+              </h2>
+              <p style="margin:0 0 24px;font-size:14px;color:#666666;line-height:1.6;">
+                Xin chào <strong th:text="${order.shippingName}">Quý khách</strong>,<br/>
+                Đơn hàng <strong th:text="'#' + ${orderId}">XXXXXXXX</strong>
+                của bạn đã được tiếp nhận và đang chờ xác nhận.
+              </p>
+
+              <!-- Order items -->
+              <table role="presentation"
+                     style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:14px;">
+                <thead>
+                  <tr style="background:#f9f9f9;">
+                    <th style="padding:10px 12px;text-align:left;font-weight:600;
+                                color:#555555;border-bottom:2px solid #e0e0e0;">
+                      Sản phẩm
+                    </th>
+                    <th style="padding:10px 12px;text-align:center;font-weight:600;
+                                color:#555555;border-bottom:2px solid #e0e0e0;white-space:nowrap;">
+                      Số lượng
+                    </th>
+                    <th style="padding:10px 12px;text-align:right;font-weight:600;
+                                color:#555555;border-bottom:2px solid #e0e0e0;white-space:nowrap;">
+                      Đơn giá
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="item : ${order.items}">
+                    <td style="padding:12px;border-bottom:1px solid #f0f0f0;"
+                        th:text="${item.nameVi}">Tên sản phẩm</td>
+                    <td style="padding:12px;border-bottom:1px solid #f0f0f0;text-align:center;"
+                        th:text="${item.qty}">1</td>
+                    <td style="padding:12px;border-bottom:1px solid #f0f0f0;text-align:right;white-space:nowrap;"
+                        th:text="${#numbers.formatDecimal(item.priceVnd, 1, 'POINT', 0, 'COMMA') + ' ₫'}">
+                      0 ₫
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="2" style="padding:14px 12px;text-align:right;
+                                           font-weight:700;font-size:15px;">
+                      Tổng cộng:
+                    </td>
+                    <td style="padding:14px 12px;text-align:right;font-weight:700;
+                                font-size:15px;white-space:nowrap;color:#8b6914;"
+                        th:text="${#numbers.formatDecimal(order.totalVnd, 1, 'POINT', 0, 'COMMA') + ' ₫'}">
+                      0 ₫
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+
+              <!-- Payment method -->
+              <p style="margin:0 0 6px;font-size:14px;">
+                <strong>Thanh toán:</strong>
+                <span th:text="${order.paymentMethod.name() == 'COD'
+                                  ? 'Thanh toán khi nhận hàng (COD)'
+                                  : 'Chuyển khoản ngân hàng'}">COD</span>
+              </p>
+
+              <!-- Shipping address block -->
+              <p style="margin:24px 0 8px;font-size:12px;font-weight:700;
+                         text-transform:uppercase;letter-spacing:0.8px;color:#888888;">
+                Địa chỉ giao hàng
+              </p>
+              <p style="margin:0;font-size:14px;line-height:1.9;">
+                <strong th:text="${order.shippingName}">Tên</strong><br/>
+                <span th:text="${order.shippingPhone}">SĐT</span><br/>
+                <span th:text="${order.shippingAddress + ', ' + order.shippingDistrict + ', ' + order.shippingCity}">
+                  Địa chỉ
+                </span>
+              </p>
+
+              <!-- Optional note -->
+              <p th:if="${order.shippingNote != null and !#strings.isEmpty(order.shippingNote)}"
+                 style="margin:12px 0 0;font-size:13px;font-style:italic;color:#777777;">
+                Ghi chú: <span th:text="${order.shippingNote}"></span>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- ── Footer ─────────────────────────────────────────────── -->
+          <tr>
+            <td style="background:#f9f9f9;padding:20px 32px;border-top:1px solid #e8e8e8;">
+              <p style="margin:0 0 6px;font-size:13px;color:#888888;line-height:1.6;">
+                Nếu bạn có câu hỏi, hãy trả lời email này hoặc liên hệ
+                <a href="mailto:support@cocoshowroom.vn"
+                   style="color:#8b6914;text-decoration:none;">support@cocoshowroom.vn</a>.
+              </p>
+              <p style="margin:0;font-size:12px;color:#aaaaaa;">
+                © 2025 Coco Showroom. Tất cả quyền được bảo lưu.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

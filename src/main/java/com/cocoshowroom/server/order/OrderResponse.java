@@ -14,6 +14,8 @@ public record OrderResponse(
         String shippingDistrict,
         String shippingCity,
         String shippingNote,
+        String contactEmail,
+        String locale,
         PaymentMethod paymentMethod,
         long totalVnd,
         Instant createdAt
@@ -29,6 +31,8 @@ public record OrderResponse(
                 order.getShippingDistrict(),
                 order.getShippingCity(),
                 order.getShippingNote(),
+                order.getContactEmail(),
+                order.getLocale(),
                 order.getPaymentMethod(),
                 order.getTotalVnd(),
                 order.getCreatedAt()

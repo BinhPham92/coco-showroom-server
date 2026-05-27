@@ -14,6 +14,13 @@ spring:
   flyway:
     enabled: false   # Flyway disabled in tests; Hibernate owns schema creation
 
+  mail:
+    # Keeps MailSenderAutoConfiguration active so OrderEmailService can be wired.
+    # Actual SMTP connections are never made: the @Async listener catches
+    # MessagingException and logs it; no test assertion depends on email delivery.
+    host: localhost
+    port: 25
+
 app:
   cors:
     origins: http://localhost:3031
@@ -27,3 +34,6 @@ app:
   oauth:
     google:
       client-id: test-google-client-id
+  mail:
+    from-address: no-reply@test.com
+    from-name: Coco Showroom Test

@@ -17,11 +17,12 @@ public class AppProperties {
     private Jwt jwt = new Jwt();
     private Storage storage = new Storage();
     private Admin admin = new Admin();
+    private Mail mail = new Mail();
 
     @Getter
     @Setter
     public static class Cors {
-        /** Comma-separated list of allowed origins, e.g. http://localhost:3031,https://cocoshowroom.vn */
+        /** Comma-separated list of allowed origins, e.g. {@code http://localhost:3031,https://cocoshowroom.vn} */
         private String origins = "http://localhost:3031";
     }
 
@@ -38,10 +39,19 @@ public class AppProperties {
     public static class Storage {
         /**
          * Base URL prepended to image storage keys — no trailing slash.
-         * Local dev: http://localhost:3031 (Next.js public folder)
-         * Production: https://cdn.cocoshowroom.vn (S3/R2 CDN)
+         * Local dev: {@code http://localhost:3031} (Next.js public folder)
+         * Production: {@code https://cdn.cocoshowroom.vn} (S3/R2 CDN)
          */
         private String baseUrl = "http://localhost:3031";
+    }
+
+    @Getter
+    @Setter
+    public static class Mail {
+        /** Envelope from-address for all outbound transactional emails. */
+        private String fromAddress = "no-reply@cocoshowroom.vn";
+        /** Display name shown in the From header. */
+        private String fromName = "Coco Showroom";
     }
 
     private OAuth oauth = new OAuth();

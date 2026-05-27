@@ -80,6 +80,17 @@
       <version>${bucket4j.version}</version>
     </dependency>
 
+    <!-- Email -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-mail</artifactId>
+    </dependency>
+    <!-- HTML email templates -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
+
     <!-- Structured JSON logging — compatible with Logback 1.5.x (Spring Boot 3.2+) -->
     <dependency>
       <groupId>net.logstash.logback</groupId>
