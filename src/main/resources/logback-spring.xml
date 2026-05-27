@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Structured JSON logging for all environments.
+
+  Every log line is a single JSON object with at minimum:
+    { "timestamp", "level", "logger_name", "thread_name", "message" }
+
+  MDC fields are included automatically — requestId (set by RequestIdFilter)
+  will appear on every line emitted during a request, enabling per-request
+  log filtering in any aggregator (Loki, CloudWatch, Datadog, etc.).
+-->
+<configuration>
+
+  <springProperty scope="context" name="APP_NAME"
+                  source="spring.application.name"
+                  defaultValue="cocoshowroom-server"/>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <!-- Tag every line with the service name for multi-service log streams -->
+      <customFields>{"app":"${APP_NAME}"}</customFields>
+      <!-- Drop @version — adds noise without value -->
+      <fieldNames>
+        <version>[ignore]</version>
+        <levelValue>[ignore]</levelValue>
+      </fieldNames>
+      <!-- All timestamps in UTC -->
+      <timeZone>UTC</timeZone>
+      <!-- MDC fields (e.g. requestId) are included by default -->
+    </encoder>
+  </appender>
+
+  <!-- ── Logger overrides ────────────────────────────────────────────────── -->
+  <!-- Silence chatty Spring internals that flood logs without adding value  -->
+  <logger name="org.springframework.web"                 level="WARN"/>
+  <logger name="org.springframework.security"            level="WARN"/>
+  <logger name="org.springframework.boot.autoconfigure"  level="WARN"/>
+  <logger name="org.hibernate.SQL"                       level="WARN"/>
+  <logger name="org.hibernate.orm.jdbc.bind"             level="WARN"/>
+  <logger name="com.zaxxer.hikari"                       level="WARN"/>
+  <!-- Keep Flyway at INFO — migration steps are operationally important -->
+  <logger name="org.flywaydb"                            level="INFO"/>
+
+  <root level="INFO">
+    <appender-ref ref="STDOUT"/>
+  </root>
+
+</configuration>

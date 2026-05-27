@@ -17,7 +17,7 @@ Follows the migration plan in the frontend's `docs/PRD/13-backend-integration.md
 | W6   | Orders (read)                 | ✅ Done     |
 | W7   | Reviews (collect + display)   | ✅ Done     |
 | W8   | OAuth/SSO (Google + Facebook) | ✅ Done     |
-| W9   | Production hardening          | 🔜 Planned  |
+| W9   | Production hardening          | ✅ Done     |
 | W10  | Transactional emails          | 🔜 Planned  |
 
 ## Quick start (local dev)
@@ -112,6 +112,8 @@ src/main/java/com/cocoshowroom/server/
     ├── ApiErrorResponse.java
     ├── GlobalExceptionHandler.java
     ├── InvalidTokenException.java    # W8: maps to 401
+    ├── RequestIdFilter.java          # W9: UUID per-request in MDC + X-Request-Id header
+    ├── RateLimitingFilter.java       # W9: Bucket4j rate limits (auth: 20/10min, reviews: 5/hr)
     └── ...
 ```
 

@@ -18,9 +18,10 @@ import java.util.UUID;
  * {@code POST /v1/products/:slug/reviews} accepts an optional JWT — guest
  * reviews are allowed; authenticated users may only review a product once.
  *
- * <p><b>TODO (post-v1):</b> add IP-based rate limiting (Bucket4j) on the
- * POST endpoint to throttle guest review spam. The moderation queue is the
- * first line of defence for now.
+ * <p>IP-based rate limiting (5 requests / hour) is enforced by
+ * {@link com.cocoshowroom.server.shared.RateLimitingFilter} before this
+ * controller is reached. The moderation queue remains the primary content
+ * defence.
  */
 @RestController
 @RequestMapping("/v1/products/{slug}/reviews")
@@ -51,6 +52,7 @@ public class ReviewController {
      */
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('STAFF')")
+    @SuppressWarnings("unused") // slug is required by Spring MVC for path-variable binding
     public ReviewResponse moderateReview(
             @PathVariable String slug,
             @PathVariable UUID id,

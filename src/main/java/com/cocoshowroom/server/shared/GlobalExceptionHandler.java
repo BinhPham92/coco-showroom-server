@@ -2,6 +2,7 @@ package com.cocoshowroom.server.shared;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -84,8 +85,13 @@ public class GlobalExceptionHandler {
         return new ApiErrorResponse("internal_error", "An unexpected error occurred.", traceId(req));
     }
 
+    /**
+     * Returns the request ID injected by {@link RequestIdFilter} via the MDC.
+     * Falls back to a fresh UUID on the rare path where the filter hasn't run
+     * (e.g. an error thrown before the filter chain starts).
+     */
     private String traceId(HttpServletRequest req) {
-        String id = req.getHeader("X-Request-Id");
-        return (id != null && !id.isBlank()) ? id : UUID.randomUUID().toString();
+        String mdcId = MDC.get(RequestIdFilter.MDC_KEY);
+        return (mdcId != null && !mdcId.isBlank()) ? mdcId : UUID.randomUUID().toString();
     }
 }

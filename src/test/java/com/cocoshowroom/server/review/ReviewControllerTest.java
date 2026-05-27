@@ -7,6 +7,7 @@ import com.cocoshowroom.server.product.Category;
 import com.cocoshowroom.server.product.Grade;
 import com.cocoshowroom.server.product.Product;
 import com.cocoshowroom.server.product.ProductRepository;
+import com.cocoshowroom.server.shared.RateLimitingFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,11 +38,16 @@ class ReviewControllerTest {
     @Autowired ReviewRepository reviewRepository;
     @Autowired ProductRepository productRepository;
     @Autowired UserRepository userRepository;
+    @Autowired RateLimitingFilter rateLimitingFilter;
     private UUID userId;
     private Product product;
 
     @BeforeEach
     void setUp() {
+        // Reset per-IP buckets so rate-limiting state from prior test methods
+        // doesn't cause spurious 429s when all tests share the same IP (127.0.0.1).
+        rateLimitingFilter.clearBuckets();
+
         reviewRepository.deleteAll();
         productRepository.deleteAll();
         userRepository.deleteAll();
