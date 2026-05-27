@@ -7,11 +7,15 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     List<Order> findAllByUserIdOrderByCreatedAtDesc(UUID userId);
+
+    /** Idempotency lookup — returns the existing order for a client-supplied key. */
+    Optional<Order> findByIdempotencyKey(String idempotencyKey);
 
     /**
      * Admin paginated listing ordered by {@code (createdAt DESC, id DESC)}.

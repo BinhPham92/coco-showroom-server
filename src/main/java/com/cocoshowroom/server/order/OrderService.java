@@ -10,7 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,12 +29,42 @@ public class OrderService {
      * <p>Each line item's price and name are snapshotted from the current product
      * record so the order is self-contained even if the catalogue changes later.
      *
-     * @param userId null for guest checkouts
+     * <p>If {@code idempotencyKey} is provided and an order with that key already
+     * exists, the existing order is returned immediately — preventing duplicate orders
+     * on network retry.
+     *
+     * @param userId         null for guest checkouts
+     * @param idempotencyKey client-supplied deduplication key (from {@code X-Idempotency-Key}
+     *                       header); null if the header was absent
      */
     @Transactional
-    public OrderResponse createOrder(UUID userId, CreateOrderRequest req) {
+    public OrderResponse createOrder(UUID userId, CreateOrderRequest req, String idempotencyKey) {
+        // Idempotency check — return existing order on retry.
+        if (idempotencyKey != null) {
+            Order existing = orderRepository.findByIdempotencyKey(idempotencyKey).orElse(null);
+            if (existing != null) {
+                return OrderResponse.from(existing);
+            }
+        }
+
+        // Batch-fetch all required products in one query to avoid N+1.
+        List<String> slugs = req.items().stream()
+                .map(CreateOrderRequest.OrderLineItem::sku)
+                .toList();
+        Map<String, Product> productsBySlug = productRepository.findAllBySlugIn(slugs)
+                .stream()
+                .collect(Collectors.toMap(Product::getSlug, Function.identity()));
+
+        // Validate that every requested SKU exists.
+        for (String slug : slugs) {
+            if (!productsBySlug.containsKey(slug)) {
+                throw new NotFoundException("Product not found: " + slug);
+            }
+        }
+
         Order order = new Order();
         order.setUserId(userId);
+        order.setIdempotencyKey(idempotencyKey);
         order.setShippingName(req.shippingName());
         order.setShippingPhone(req.shippingPhone());
         order.setShippingAddress(req.shippingAddress());
@@ -44,8 +77,7 @@ public class OrderService {
 
         long total = 0;
         for (CreateOrderRequest.OrderLineItem line : req.items()) {
-            Product product = productRepository.findBySlug(line.sku())
-                    .orElseThrow(() -> new NotFoundException("Product not found: " + line.sku()));
+            Product product = productsBySlug.get(line.sku());
 
             OrderItem item = new OrderItem();
             item.setOrder(order);

@@ -53,6 +53,13 @@ public class GoogleVerifier implements SocialTokenVerifier {
             throw new InvalidTokenException("Google token issuer invalid");
         }
 
+        // Only verified emails are trusted; an unverified address could be claimed by
+        // anyone who registers with that email on a permissive provider.
+        Boolean emailVerified = jwt.getClaim("email_verified");
+        if (!Boolean.TRUE.equals(emailVerified)) {
+            throw new InvalidTokenException("Google account email is not verified");
+        }
+
         String email = jwt.getClaimAsString("email");
         if (email == null || email.isBlank()) {
             throw new InvalidTokenException("Google token missing email claim");

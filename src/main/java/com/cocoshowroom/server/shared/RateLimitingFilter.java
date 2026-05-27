@@ -43,8 +43,20 @@ import java.util.function.Supplier;
  *
  * <p><b>Storage:</b> in-memory {@link ConcurrentHashMap} — zero dependencies,
  * but resets on restart and does not share state across multiple JVM instances.
- * Upgrade path: replace the map with a Bucket4j {@code ProxyManager} backed by
- * Redis when horizontal scaling is needed.
+ * At N replicas each instance allows the full quota, so effective limits are N×
+ * the configured values. This is an accepted trade-off for single-node deployments.
+ *
+ * <p><b>Upgrade path to distributed rate-limiting:</b>
+ * <ol>
+ *   <li>Add {@code bucket4j-redis} (io.github.bucket4j:bucket4j-redis) and
+ *       {@code spring-boot-starter-data-redis} dependencies.</li>
+ *   <li>Configure a {@code RedissonClient} or {@code LettuceConnectionFactory} bean.</li>
+ *   <li>Replace the two {@link ConcurrentHashMap}s with a
+ *       {@code io.github.bucket4j.redis.redisson.cas.RedissonBasedProxyManager}
+ *       (or its Lettuce variant).</li>
+ *   <li>Replace {@code computeIfAbsent(ip, k -> factory.get())} calls with
+ *       {@code proxyManager.builder().build(ip, configSupplier).tryConsumeAndReturnRemaining(1)}.</li>
+ * </ol>
  *
  * <p>Runs just after {@link RequestIdFilter} ({@link Ordered#HIGHEST_PRECEDENCE} + 5)
  * so the {@code requestId} MDC key is already populated when a 429 is written.

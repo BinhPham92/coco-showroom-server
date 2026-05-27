@@ -67,6 +67,15 @@ public class Order {
     @Column(nullable = false)
     private long totalVnd;
 
+    /**
+     * Client-supplied deduplication key (sent as {@code X-Idempotency-Key} header).
+     * If the same key is submitted again before the order is finalised, the server
+     * returns the existing order instead of creating a duplicate.
+     * Nullable — guest and legacy orders have no key.
+     */
+    @Column(name = "idempotency_key", unique = true, length = 64)
+    private String idempotencyKey;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 

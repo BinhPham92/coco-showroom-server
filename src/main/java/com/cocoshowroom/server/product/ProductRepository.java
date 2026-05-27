@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,6 +14,9 @@ import java.util.UUID;
 public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     Optional<Product> findBySlug(String slug);
+
+    /** Batch-fetch multiple products by slug in a single query. */
+    List<Product> findAllBySlugIn(Collection<String> slugs);
 
     boolean existsBySlug(String slug);
 

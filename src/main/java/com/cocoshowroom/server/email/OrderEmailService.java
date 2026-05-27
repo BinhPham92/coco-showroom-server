@@ -64,7 +64,10 @@ public class OrderEmailService {
                     StandardCharsets.UTF_8.name()
             ));
             helper.setTo(order.contactEmail());
-            helper.setSubject("Xác nhận đơn hàng #" + shortId(order.id()) + " – Coco Showroom");
+            String subject = isEn
+                    ? "Order Confirmation #" + shortId(order.id()) + " – Coco Showroom"
+                    : "Xác nhận đơn hàng #" + shortId(order.id()) + " – Coco Showroom";
+            helper.setSubject(subject);
             helper.setText(html, true);
 
             mailSender.send(message);

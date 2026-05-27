@@ -69,12 +69,26 @@ public class AppProperties {
     @Setter
     public static class OAuth {
         private Google google = new Google();
+        private Facebook facebook = new Facebook();
 
         @Getter
         @Setter
         public static class Google {
             /** Google OAuth client ID — used to verify the 'aud' claim of id_tokens. */
             private String clientId;
+        }
+
+        @Getter
+        @Setter
+        public static class Facebook {
+            /** Facebook App ID — validated against the token's debug_token response. */
+            private String appId;
+            /**
+             * Facebook App Secret — combined with appId as the App Access Token
+             * ({@code appId|appSecret}) for server-to-server token introspection.
+             * Must be kept secret and never sent to the client.
+             */
+            private String appSecret;
         }
     }
 }

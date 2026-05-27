@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+import static org.springframework.util.StringUtils.hasText;
+
 /**
  * Order endpoints.
  *
@@ -31,10 +33,14 @@ public class OrderController {
     @ResponseStatus(HttpStatus.CREATED)
     public OrderResponse createOrder(
             @AuthenticationPrincipal Jwt jwt,   // null for guest requests
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody CreateOrderRequest request
     ) {
         UUID userId = jwt != null ? UUID.fromString(jwt.getSubject()) : null;
-        return orderService.createOrder(userId, request);
+        // Trim and normalise the key; treat blank as absent.
+        String key = (hasText(idempotencyKey))
+                ? idempotencyKey.trim() : null;
+        return orderService.createOrder(userId, request, key);
     }
 
     /** Returns the order by ID. Public so the confirm page works for guests. */

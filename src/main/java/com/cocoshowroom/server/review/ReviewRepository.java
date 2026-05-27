@@ -11,8 +11,13 @@ import java.util.UUID;
 
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
-    /** Public listing — only APPROVED reviews. */
-    List<Review> findAllByProductIdAndStatusOrderByCreatedAtDesc(UUID productId, ReviewStatus status);
+    /**
+     * Public listing — only APPROVED reviews, newest first.
+     * A {@link Pageable} is required to prevent an unbounded full-table scan on
+     * popular products. Callers should pass a sensible page size (e.g. 50).
+     */
+    List<Review> findAllByProductIdAndStatusOrderByCreatedAtDesc(
+            UUID productId, ReviewStatus status, Pageable pageable);
 
     boolean existsByProductIdAndUserId(UUID productId, UUID userId);
 

@@ -7,6 +7,7 @@ import com.cocoshowroom.server.product.ProductRepository;
 import com.cocoshowroom.server.shared.ConflictException;
 import com.cocoshowroom.server.shared.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,8 +27,11 @@ public class ReviewService {
     public List<ReviewResponse> getReviews(String slug) {
         Product product = productRepository.findBySlug(slug)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + slug));
+        // Cap at 50 to prevent a full-table scan on popular products.
+        // Cursor-based pagination can be introduced here once the product page requires it.
         return reviewRepository
-                .findAllByProductIdAndStatusOrderByCreatedAtDesc(product.getId(), ReviewStatus.APPROVED)
+                .findAllByProductIdAndStatusOrderByCreatedAtDesc(
+                        product.getId(), ReviewStatus.APPROVED, PageRequest.of(0, 50))
                 .stream()
                 .map(ReviewResponse::from)
                 .toList();
