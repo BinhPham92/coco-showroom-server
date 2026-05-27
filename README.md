@@ -19,6 +19,7 @@ Follows the migration plan in the frontend's `docs/PRD/13-backend-integration.md
 | W8   | OAuth/SSO (Google + Facebook) | ✅ Done     |
 | W9   | Production hardening          | ✅ Done     |
 | W10  | Transactional emails          | ✅ Done     |
+| W11  | Staff / Admin API             | ✅ Done     |
 
 ## Quick start (local dev)
 
@@ -121,9 +122,16 @@ src/main/java/com/cocoshowroom/server/
     ├── RequestIdFilter.java          # W9: UUID per-request in MDC + X-Request-Id header
     ├── RateLimitingFilter.java       # W9: Bucket4j rate limits (auth: 20/10min, reviews: 5/hr)
     └── ...
-└── email/                            # W10: transactional emails
-    ├── OrderConfirmedEvent.java      # Spring event published after order commit
-    └── OrderEmailService.java        # @TransactionalEventListener + @Async sender
+├── email/                            # W10: transactional emails
+│   ├── OrderConfirmedEvent.java      # Spring event published after order commit
+│   └── OrderEmailService.java        # @TransactionalEventListener + @Async sender
+└── admin/                            # W11: staff-only listing endpoints
+    ├── AdminOrderController.java     # GET /v1/admin/orders
+    ├── AdminOrderService.java
+    ├── AdminReviewController.java    # GET /v1/admin/reviews
+    ├── AdminReviewService.java
+    ├── AdminContactController.java   # GET /v1/admin/contact-submissions
+    └── AdminContactService.java
 ```
 
 ## API contract

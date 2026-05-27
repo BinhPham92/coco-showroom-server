@@ -125,6 +125,15 @@
 
   <build>
     <plugins>
+      <!-- Force UTC JVM timezone so H2 timestamp round-trips are consistent -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>-Duser.timezone=UTC</argLine>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>

@@ -3,7 +3,6 @@ package com.cocoshowroom.server.product;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -33,17 +32,15 @@ public class ProductController {
         return productService.findBySlug(slug);
     }
 
-    // ── Staff only (requires JWT with role=STAFF) ─────────────────────────
+    // ── Staff only (guarded by SecurityConfig requestMatchers) ───────────
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('STAFF')")
     public ProductResponse create(@Valid @RequestBody ProductRequest request) {
         return productService.create(request);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('STAFF')")
     public ProductResponse update(
         @PathVariable UUID id,
         @Valid @RequestBody ProductRequest request
@@ -53,7 +50,6 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('STAFF')")
     public void delete(@PathVariable UUID id) {
         productService.delete(id);
     }

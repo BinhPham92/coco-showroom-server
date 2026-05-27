@@ -10,7 +10,7 @@ public record ReviewResponse(
         String status,
         long createdAt   // epoch-ms, consistent with other timestamp fields
 ) {
-    static ReviewResponse from(Review review) {
+    public static ReviewResponse from(Review review) {
         return new ReviewResponse(
                 review.getId(),
                 review.getAuthorName(),

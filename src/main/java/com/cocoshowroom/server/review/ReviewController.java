@@ -3,7 +3,6 @@ package com.cocoshowroom.server.review;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -47,11 +46,10 @@ public class ReviewController {
     }
 
     /**
-     * Updates a review's moderation status. STAFF only.
+     * Updates a review's moderation status. STAFF only (guarded by SecurityConfig requestMatchers).
      * Example: APPROVE a legitimate review, REJECT spam.
      */
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('STAFF')")
     @SuppressWarnings("unused") // slug is required by Spring MVC for path-variable binding
     public ReviewResponse moderateReview(
             @PathVariable String slug,

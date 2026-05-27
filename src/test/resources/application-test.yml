@@ -10,6 +10,12 @@ spring:
       ddl-auto: create-drop   # Hibernate creates schema from entities in tests
     database-platform: org.hibernate.dialect.H2Dialect
     show-sql: true
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC   # Force UTC for all timestamp JDBC binding/reading,
+                           # so cursors built from response values match stored values
+                           # regardless of the JVM's local timezone.
 
   flyway:
     enabled: false   # Flyway disabled in tests; Hibernate owns schema creation

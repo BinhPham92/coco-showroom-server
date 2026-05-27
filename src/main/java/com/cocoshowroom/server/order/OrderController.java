@@ -3,7 +3,6 @@ package com.cocoshowroom.server.order;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -54,11 +53,10 @@ public class OrderController {
     }
 
     /**
-     * Updates an order's status. STAFF only.
+     * Updates an order's status. STAFF only (guarded by SecurityConfig requestMatchers).
      * Example: mark as CONFIRMED after reviewing, SHIPPED after dispatch.
      */
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('STAFF')")
     public OrderResponse updateStatus(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateStatusRequest request

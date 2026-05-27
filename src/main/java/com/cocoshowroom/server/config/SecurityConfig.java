@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -31,7 +30,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity          // enables @PreAuthorize on controller methods
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -49,7 +47,7 @@ public class SecurityConfig {
             // Auth endpoints — social sign-in and sign-out are public; /me requires a token
             .requestMatchers(HttpMethod.POST, "/v1/auth/social").permitAll()
             .requestMatchers(HttpMethod.POST, "/v1/auth/sign-out").permitAll()
-            // Products — reads are public; writes require STAFF role via @PreAuthorize
+            // Products — reads are public
             .requestMatchers(HttpMethod.GET, "/v1/products/**").permitAll()
             // Contact — public
             .requestMatchers(HttpMethod.POST, "/v1/contact").permitAll()
@@ -63,6 +61,14 @@ public class SecurityConfig {
             // attached when present to associate the order with the user account
             .requestMatchers(HttpMethod.POST, "/v1/orders").permitAll()
             .requestMatchers(HttpMethod.GET,  "/v1/orders/*").permitAll()
+            // STAFF-only operations — all managed centrally here, no @PreAuthorize needed
+            .requestMatchers(HttpMethod.POST,   "/v1/products").hasRole("STAFF")   // product create
+            .requestMatchers(HttpMethod.PUT,    "/v1/products/**").hasRole("STAFF") // product update
+            .requestMatchers(HttpMethod.DELETE, "/v1/products/**").hasRole("STAFF") // product delete
+            .requestMatchers(HttpMethod.PATCH,  "/v1/products/**").hasRole("STAFF") // review moderation
+            .requestMatchers(HttpMethod.PATCH,  "/v1/orders/**").hasRole("STAFF")   // order status
+            // Admin — all /v1/admin/** paths require STAFF role
+            .requestMatchers("/v1/admin/**").hasRole("STAFF")
             // Everything else requires a valid JWT
             .anyRequest().authenticated()
         )
@@ -94,8 +100,8 @@ public class SecurityConfig {
   }
 
   /**
-   * Reads the "role" claim from the JWT and maps it to Spring Security's ROLE_* convention so
-   * @PreAuthorize("hasRole('STAFF')") works correctly.
+   * Reads the "role" claim from the JWT and maps it to Spring Security's ROLE_* convention
+   * so {@code hasRole("STAFF")} in the filter chain resolves correctly.
    */
   @Bean
   public JwtAuthenticationConverter jwtAuthenticationConverter() {
